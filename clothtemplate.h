@@ -11,7 +11,10 @@ public:
     ClothTemplate(std::string &meshFilename);
     ~ClothTemplate();
 
+    void computeMassInv();
     const Mesh &getMesh() const { return *m_; }
+
+    Eigen::MatrixXd massinv;
 
 private:
     Mesh *m_;
