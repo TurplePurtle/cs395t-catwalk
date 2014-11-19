@@ -11,6 +11,8 @@
 #include <Eigen/Dense>
 #include "mesh.h"
 #include "signeddistancefield.h"
+#include "clothtemplate.h"
+#include "clothinstance.h"
 
 const double PI = 3.1415926535898;
 
@@ -21,6 +23,9 @@ Simulation::Simulation(const SimParameters &params) : params_(params), time_(0),
 {
     loadRigidBodies();
     bodyInstance_ = NULL;
+    string clothname("resources/square.obj");
+    clothTemplate_ = new ClothTemplate(clothname);
+    clothInstance_ = NULL;
     clearScene();
 }
 
@@ -28,6 +33,8 @@ Simulation::~Simulation()
 {
     delete bodyInstance_;
     delete bodyTemplate_;
+    delete clothInstance_;
+    delete clothTemplate_;
 }
 
 void Simulation::initializeGL()
@@ -116,6 +123,7 @@ void Simulation::renderObjects()
     renderLock_.lock();
     {
         bodyInstance_->render();
+        clothInstance_->render();
     }
     renderLock_.unlock();
 }
@@ -136,6 +144,10 @@ void Simulation::clearScene()
         Vector3d pos(5, 0, 3);
         Vector3d zero(0,0,0);
         bodyInstance_ = new RigidBodyInstance(*bodyTemplate_, pos, zero, 1.0);
+
+        delete clothInstance_;
+        Vector3d trans(5, 0, 4);
+        clothInstance_ = new ClothInstance(*clothTemplate_, trans);
     }
     renderLock_.unlock();
 }

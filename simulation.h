@@ -12,6 +12,9 @@
 class RigidBodyTemplate;
 class RigidBodyInstance;
 
+class ClothTemplate;
+class ClothInstance;
+
 typedef Eigen::Triplet<double> Tr;
 
 class SimParameters;
@@ -42,6 +45,8 @@ private:
 
     RigidBodyTemplate * bodyTemplate_;
     RigidBodyInstance * bodyInstance_;
+    ClothTemplate * clothTemplate_;
+    ClothInstance * clothInstance_;
 };
 
 #endif // SIMULATION_H
