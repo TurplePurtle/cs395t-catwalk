@@ -25,7 +25,7 @@ Simulation::Simulation(const SimParameters &params) : params_(params), time_(0),
     bodyInstance_ = NULL;
     string clothname("resources/square.obj");
     clothTemplate_ = new ClothTemplate(clothname);
-    clothInstance_ = NULL;
+    cloth_ = NULL;
     clearScene();
 }
 
@@ -33,7 +33,7 @@ Simulation::~Simulation()
 {
     delete bodyInstance_;
     delete bodyTemplate_;
-    delete clothInstance_;
+    delete cloth_;
     delete clothTemplate_;
 }
 
@@ -123,17 +123,31 @@ void Simulation::renderObjects()
     renderLock_.lock();
     {
         bodyInstance_->render();
-        clothInstance_->render();
+        cloth_->render();
     }
     renderLock_.unlock();
 }
 
 void Simulation::takeSimulationStep()
 {
-    time_ += params_.timeStep;
+    const double dt = params_.timeStep;
+    time_ += dt;
 
-    bodyInstance_->c += params_.timeStep*bodyInstance_->cvel;
-    bodyInstance_->theta = VectorMath::axisAngle(VectorMath::rotationMatrix(params_.timeStep*bodyInstance_->w)*VectorMath::rotationMatrix(bodyInstance_->theta));
+    renderLock_.lock();
+    {
+        bodyInstance_->c += dt*bodyInstance_->cvel;
+        bodyInstance_->theta = VectorMath::axisAngle(VectorMath::rotationMatrix(dt*bodyInstance_->w)*VectorMath::rotationMatrix(bodyInstance_->theta));
+
+        for (int i=0; i<cloth_->q.size()/3; i++)
+        {
+            cloth_->v.segment<3>(3*i)[2] += params_.gravityG * dt;
+        }
+        for (int i=0; i<cloth_->q.size()/3; i++)
+        {
+            cloth_->q.segment<3>(3*i) += cloth_->v.segment<3>(3*i) * dt;
+        }
+    }
+    renderLock_.unlock();
 }
 
 void Simulation::clearScene()
@@ -145,9 +159,9 @@ void Simulation::clearScene()
         Vector3d zero(0,0,0);
         bodyInstance_ = new RigidBodyInstance(*bodyTemplate_, pos, zero, 1.0);
 
-        delete clothInstance_;
+        delete cloth_;
         Vector3d trans(5, 0, 4);
-        clothInstance_ = new ClothInstance(*clothTemplate_, trans);
+        cloth_ = new ClothInstance(*clothTemplate_, trans);
     }
     renderLock_.unlock();
 }

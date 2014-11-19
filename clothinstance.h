@@ -16,10 +16,11 @@ public:
 
     const ClothTemplate &getTemplate() { return temp_; }
 
+    Eigen::VectorXd q;
+    Eigen::VectorXd v;
+
 private:
     const ClothTemplate &temp_;
-    Eigen::VectorXd q_;
-    Eigen::VectorXd v_;
     Eigen::VectorXd vertNormals_;
     std::vector<Eigen::Vector3d> faceNormals_;
     std::vector<double> faceAreas_;

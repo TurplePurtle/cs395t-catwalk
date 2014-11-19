@@ -13,12 +13,15 @@ ClothInstance::ClothInstance(ClothTemplate &temp, const Vector3d &trans) : temp_
     const Mesh &mesh = temp_.getMesh();
     const int n = mesh.getNumVerts();
 
-    q_.resize(3*n);
+    q.resize(3*n);
+    v.resize(3*n);
 
     for (int i=0; i<n; i++)
     {
-        q_.segment<3>(3*i) = mesh.getVert(i) + trans;
+        q.segment<3>(3*i) = mesh.getVert(i) + trans;
     }
+
+    v.setZero();
 }
 
 void ClothInstance::computeNormals()
@@ -29,10 +32,10 @@ void ClothInstance::computeNormals()
     const Mesh &mesh = temp_.getMesh();
     vector<double> verttotalarea;
 
-    vertNormals_.resize(q_.size());
+    vertNormals_.resize(q.size());
     vertNormals_.setZero();
 
-    for(int i=0; i < (int)q_.size()/3; i++)
+    for(int i=0; i < (int)q.size()/3; i++)
     {
         verttotalarea.push_back(0);
     }
@@ -42,7 +45,7 @@ void ClothInstance::computeNormals()
         Vector3i fverts = mesh.getFace(i);
         Vector3d pts[3];
         for(int j=0; j<3; j++)
-            pts[j] = q_.segment<3>(3*fverts[j]);
+            pts[j] = q.segment<3>(3*fverts[j]);
 
         Vector3d normal = (pts[1]-pts[0]).cross(pts[2]-pts[0]);
         double norm = normal.norm();
@@ -55,7 +58,7 @@ void ClothInstance::computeNormals()
         }
     }
 
-    for(int i=0; i<(int)q_.size()/3; i++)
+    for(int i=0; i<(int)q.size()/3; i++)
         vertNormals_.segment<3>(3*i) /= verttotalarea[i];
 }
 
@@ -85,10 +88,10 @@ void ClothInstance::render()
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_NORMAL_ARRAY);
 
-        glVertexPointer(3, GL_DOUBLE, 0, &q_[0]);
+        glVertexPointer(3, GL_DOUBLE, 0, &q[0]);
         glNormalPointer(GL_DOUBLE, 0, &vertNormals_[0]);
 
-        glDrawElements(GL_TRIANGLES, q_.size(), GL_UNSIGNED_INT, temp_.getMesh().getFacePointer());
+        glDrawElements(GL_TRIANGLES, q.size(), GL_UNSIGNED_INT, temp_.getMesh().getFacePointer());
 
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);

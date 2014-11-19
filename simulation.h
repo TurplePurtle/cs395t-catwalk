@@ -46,7 +46,7 @@ private:
     RigidBodyTemplate * bodyTemplate_;
     RigidBodyInstance * bodyInstance_;
     ClothTemplate * clothTemplate_;
-    ClothInstance * clothInstance_;
+    ClothInstance * cloth_;
 };
 
 #endif // SIMULATION_H
