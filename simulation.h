@@ -26,6 +26,7 @@ public:
     ~Simulation();
 
     void takeSimulationStep();
+    void computeClothForces(Eigen::VectorXd &F);
     void initializeGL();
 
     void renderFloor();

@@ -14,6 +14,7 @@ public:
     void computeMassInv();
     const Mesh &getMesh() const { return *m_; }
 
+    Eigen::MatrixXd mass;
     Eigen::MatrixXd massinv;
 
 private:

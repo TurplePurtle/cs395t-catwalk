@@ -133,21 +133,31 @@ void Simulation::takeSimulationStep()
     const double dt = params_.timeStep;
     time_ += dt;
 
+    VectorXd Fcloth;
+    Fcloth.resize(cloth_->q.size());
+    Fcloth.setZero();
+
     renderLock_.lock();
     {
         bodyInstance_->c += dt*bodyInstance_->cvel;
         bodyInstance_->theta = VectorMath::axisAngle(VectorMath::rotationMatrix(dt*bodyInstance_->w)*VectorMath::rotationMatrix(bodyInstance_->theta));
 
-        for (int i=0; i<cloth_->q.size()/3; i++)
-        {
-            cloth_->v.segment<3>(3*i)[2] += params_.gravityG * dt;
-        }
-        for (int i=0; i<cloth_->q.size()/3; i++)
-        {
-            cloth_->q.segment<3>(3*i) += cloth_->v.segment<3>(3*i) * dt;
-        }
+        cloth_->q += cloth_->v * dt;
+        computeClothForces(Fcloth);
+        cloth_->v += cloth_->getTemplate().massinv * Fcloth * dt;
     }
     renderLock_.unlock();
+}
+
+void Simulation::computeClothForces(VectorXd &F)
+{
+    if (params_.activeForces & SimParameters::F_GRAVITY)
+    {
+        for (int i=0; i<cloth_->q.size()/3; i++)
+        {
+            F(3*i+2) += cloth_->getTemplate().mass(3*i+2,3*i+2) * params_.gravityG;
+        }
+    }
 }
 
 void Simulation::clearScene()
