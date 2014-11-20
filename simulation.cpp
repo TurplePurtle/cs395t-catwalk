@@ -141,29 +141,27 @@ void Simulation::takeSimulationStep()
     renderLock_.lock();
     {
         bodyInstance_->c += dt*bodyInstance_->cvel;
-        bodyInstance_->theta = VectorMath::axisAngle(VectorMath::rotationMatrix(dt*bodyInstance_->w)*VectorMath::rotationMatrix(bodyInstance_->theta));
-
         cloth_->q += cloth_->v * dt;
-        computeClothForces(Fcloth);
-        cloth_->v += cloth_->getTemplate().massinv * Fcloth * dt;
     }
     renderLock_.unlock();
+
+    bodyInstance_->theta = VectorMath::axisAngle(VectorMath::rotationMatrix(dt*bodyInstance_->w)*VectorMath::rotationMatrix(bodyInstance_->theta));
+
+    computeClothForces(Fcloth);
+    cloth_->v += cloth_->getTemplate().massinv * Fcloth * dt;
+
+    if (params_.pinCorner)
+        cloth_->v.segment<3>(0).setZero();
 }
 
 void Simulation::computeClothForces(VectorXd &F)
 {
     if (params_.activeForces & SimParameters::F_GRAVITY)
-    {
         for (int i=0; i<cloth_->q.size()/3; i++)
-        {
             F(3*i+2) += cloth_->getTemplate().mass(3*i+2,3*i+2) * params_.gravityG;
-        }
-    }
 
     if (params_.activeForces & SimParameters::F_DAMPING)
-    {
         F -= params_.dampingCoeff * cloth_->getTemplate().mass * cloth_->v;
-    }
 }
 
 void Simulation::clearScene()
