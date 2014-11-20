@@ -123,6 +123,7 @@ void Simulation::renderObjects()
     renderLock_.lock();
     {
         bodyInstance_->render();
+        cloth_->computeNormals();
         cloth_->render();
     }
     renderLock_.unlock();
@@ -157,6 +158,11 @@ void Simulation::computeClothForces(VectorXd &F)
         {
             F(3*i+2) += cloth_->getTemplate().mass(3*i+2,3*i+2) * params_.gravityG;
         }
+    }
+
+    if (params_.activeForces & SimParameters::F_DAMPING)
+    {
+        F -= params_.dampingCoeff * cloth_->getTemplate().mass * cloth_->v;
     }
 }
 

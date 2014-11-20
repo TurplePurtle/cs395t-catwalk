@@ -64,8 +64,6 @@ void ClothInstance::computeNormals()
 
 void ClothInstance::render()
 {
-    computeNormals();
-
     glShadeModel(GL_SMOOTH);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_LIGHTING);
@@ -73,7 +71,7 @@ void ClothInstance::render()
     glEnable(GL_COLOR_MATERIAL);
     glColor4d(0.6, 0.9, 0.3, 1.0);
 
-    glPushMatrix();
+//    glPushMatrix();
     {
 //        GLdouble xform[16];
 //        for(int i=0; i<3; i++)
@@ -91,10 +89,10 @@ void ClothInstance::render()
         glVertexPointer(3, GL_DOUBLE, 0, &q[0]);
         glNormalPointer(GL_DOUBLE, 0, &vertNormals_[0]);
 
-        glDrawElements(GL_TRIANGLES, q.size(), GL_UNSIGNED_INT, temp_.getMesh().getFacePointer());
+        glDrawElements(GL_TRIANGLES, 3*temp_.getMesh().getNumFaces(), GL_UNSIGNED_INT, temp_.getMesh().getFacePointer());
 
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
     }
-    glPopMatrix();
+//    glPopMatrix();
 }
