@@ -178,8 +178,7 @@ void Simulation::computeClothForces(VectorXd &F)
             Matrix<double,2,3> e;
             e << e1.transpose(), e2.transpose();
 
-            Matrix2d g;
-            g << e1.dot(e1), e1.dot(e2), e1.dot(e2), e2.dot(e2);
+            Matrix2d g = e * e.transpose();
 
             Matrix<double,6,4> DifG;
             DifG.block<3,1>(0,0) = 2*e1;
