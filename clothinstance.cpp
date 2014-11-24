@@ -22,6 +22,7 @@ ClothInstance::ClothInstance(ClothTemplate &temp, const Vector3d &trans) : temp_
     }
 
     v.setZero();
+    computeNormals();
 }
 
 void ClothInstance::computeNormals()
@@ -30,15 +31,10 @@ void ClothInstance::computeNormals()
     faceAreas_.clear();
 
     const Mesh &mesh = temp_.getMesh();
-    vector<double> verttotalarea;
+    vector<double> verttotalarea(q.size()/3, 0.0);
 
     vertNormals_.resize(q.size());
     vertNormals_.setZero();
-
-    for(int i=0; i < (int)q.size()/3; i++)
-    {
-        verttotalarea.push_back(0);
-    }
 
     for(int i=0; i < (int)mesh.getNumFaces(); i++)
     {
@@ -71,18 +67,7 @@ void ClothInstance::render()
     glEnable(GL_COLOR_MATERIAL);
     glColor4d(0.6, 0.9, 0.3, 1.0);
 
-//    glPushMatrix();
     {
-//        GLdouble xform[16];
-//        for(int i=0; i<3; i++)
-//        {
-//            for(int j=0; j<3; j++)
-//                xform[4*j+i] = 0;
-//            xform[4*i+3] = 0;
-//            xform[12+i] = 0;
-//        }
-//        xform[15] = 1.0;
-//        glMultMatrixd(xform);
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_NORMAL_ARRAY);
 
@@ -94,5 +79,4 @@ void ClothInstance::render()
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
     }
-//    glPopMatrix();
 }

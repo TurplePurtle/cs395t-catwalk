@@ -13,6 +13,7 @@
 #include "signeddistancefield.h"
 #include "clothtemplate.h"
 #include "clothinstance.h"
+#include <Eigen/LU>
 
 const double PI = 3.1415926535898;
 
@@ -162,6 +163,49 @@ void Simulation::computeClothForces(VectorXd &F)
 
     if (params_.activeForces & SimParameters::F_DAMPING)
         F -= params_.dampingCoeff * cloth_->getTemplate().mass * cloth_->v;
+
+    if (params_.activeForces & SimParameters::F_STRETCHING)
+    {
+        int n = clothTemplate_->getMesh().getNumFaces();
+
+        for (int i=0; i<n; i++)
+        {
+            Vector3i verts = cloth_->getTemplate().getMesh().getFace(i);
+            Vector3d pi = cloth_->q.segment<3>(3*verts[0]);
+            Vector3d e1 = cloth_->q.segment<3>(3*verts[1]) - pi;
+            Vector3d e2 = cloth_->q.segment<3>(3*verts[2]) - pi;
+
+            Matrix<double,2,3> e;
+            e << e1.transpose(), e2.transpose();
+
+            Matrix2d g;
+            g << e1.dot(e1), e1.dot(e2), e1.dot(e2), e2.dot(e2);
+
+            Matrix<double,6,4> DifG;
+            DifG.block<3,1>(0,0) = 2*e1;
+            DifG.block<3,1>(3,0).setZero();
+            DifG.block<3,1>(0,1) = e2;
+            DifG.block<3,1>(3,1) = e1;
+            DifG.block<3,1>(0,2) = e2;
+            DifG.block<3,1>(3,2) = e1;
+            DifG.block<3,1>(0,3).setZero();
+            DifG.block<3,1>(3,3) = 2*e2;
+
+            Matrix2d dg = g - clothTemplate_->matGs[i];
+            Matrix<double,2,3> B = clothTemplate_->matGs[i].inverse() * clothTemplate_->matEs[i];
+            Matrix3d strainTensor = 0.5 * B.transpose()*dg*B;
+            Matrix<double,9,1> strainTensorv;
+            strainTensorv.segment<3>(0) = strainTensor.block<1,3>(0,0);
+            strainTensorv.segment<3>(3) = strainTensor.block<1,3>(1,0);
+            strainTensorv.segment<3>(6) = strainTensor.block<1,3>(2,0);
+
+            Matrix<double,9,1> Ftri = -2*params_.stretchingK*clothTemplate_->getMesh().getFaceArea(i)*clothTemplate_->matC*DifG*clothTemplate_->matAs[i]*strainTensorv;
+
+            F.segment<3>(3*verts[0]) += Ftri.segment<3>(0);
+            F.segment<3>(3*verts[1]) += Ftri.segment<3>(3);
+            F.segment<3>(3*verts[2]) += Ftri.segment<3>(6);
+        }
+    }
 }
 
 void Simulation::clearScene()
