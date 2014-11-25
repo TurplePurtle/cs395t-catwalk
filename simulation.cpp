@@ -246,6 +246,31 @@ void Simulation::computeClothForces(VectorXd &F)
             }
         }
     }
+
+    if (params_.activeForces & SimParameters::F_CONTACT)
+    {
+        int n = cloth_->q.size()/3;
+        double k = -params_.penaltyStiffness;
+
+        for (int i=0; i<n; i++)
+        {
+            Vector3d q = cloth_->q.segment<3>(3*i);
+
+            if ((q - bodyInstance_->c).squaredNorm() > 1.0)
+                continue;
+
+            Vector3d pos = VectorMath::rotationMatrix(-bodyInstance_->theta)*(q - bodyInstance_->c);
+            double dist;
+            Vector3d Ddist;
+            bodyTemplate_->getSDF()->signedDistanceAndGradient(pos, dist, Ddist);
+
+            if (dist < 0)
+            {
+                Vector3d vrel = cloth_->v.segment<3>(3*i) - (bodyInstance_->cvel + bodyInstance_->w.cross(q - bodyInstance_->c));
+                F.segment<3>(3*i) += vrel.dot(Ddist) < 0 ? k*dist*Ddist : k*params_.cor*dist*Ddist;
+            }
+        }
+    }
 }
 
 void Simulation::clearScene()
