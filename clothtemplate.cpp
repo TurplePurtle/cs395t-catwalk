@@ -16,6 +16,7 @@ ClothTemplate::ClothTemplate(std::string &meshFilename)
     m_ = new Mesh(meshFilename);
     computeMassInv();
     computeConstants();
+    buildHingeList();
 }
 
 ClothTemplate::~ClothTemplate()
@@ -58,6 +59,9 @@ void ClothTemplate::computeConstants()
 
     int n = m_->getNumFaces();
 
+    matAs.clear();
+    matGs.clear();
+    matEs.clear();
     matAs.reserve(n);
     matGs.reserve(n);
     matEs.reserve(n);
@@ -95,5 +99,56 @@ void ClothTemplate::computeConstants()
 
         assert(is_finite(A));
         matAs.push_back(A.transpose());
+    }
+}
+
+void ClothTemplate::buildHingeList()
+{
+    int n = m_->getNumFaces();
+
+    hinges.clear();
+    hinges.reserve(n);
+
+    for (int i=0; i<n; i++)
+    {
+        for (int j=i+1; j<n; j++)
+        {
+            Vector3i vs0 = m_->getFace(i);
+            Vector3i vs1 = m_->getFace(j);
+
+            int cvs[3];
+            int common = 0;
+
+            for (int i1=0; i1<3; i1++)
+                for (int i2=0; i2<3; i2++)
+                    if (vs0[i1] == vs1[i2] && vs0[i1] >= 0)
+                    {
+                        cvs[common++] = vs0[i1];
+                        vs0[i1] = -1;
+                        vs1[i2] = -1;
+                    }
+
+            assert(common < 3);
+
+            if (common == 2)
+            {
+                int vk = -1;
+                for (int i1=0; i1<3; i1++)
+                    if (vs0[i1] != -1)
+                    {
+                        vk = vs0[i1];
+                        break;
+                    }
+                int vl = -1;
+                for (int i1=0; i1<3; i1++)
+                    if (vs1[i1] != -1)
+                    {
+                        vl = vs1[i1];
+                        break;
+                    }
+                double coeff = (m_->getVert(cvs[0]) - m_->getVert(cvs[1])).squaredNorm() / (m_->getFaceArea(i) + m_->getFaceArea(j));
+                hinges.push_back(ClothHinge(cvs[0], cvs[1], vk, vl, i, j, coeff));
+            }
+        }
     }
 }

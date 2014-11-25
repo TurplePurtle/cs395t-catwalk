@@ -205,6 +205,29 @@ void Simulation::computeClothForces(VectorXd &F)
             F.segment<3>(3*verts[2]) += Ftri.segment<3>(6);
         }
     }
+
+    if (params_.activeForces & SimParameters::F_BENDING)
+    {
+        int n = cloth_->getTemplate().hinges.size();
+
+        for (int i=0; i<n; i++)
+        {
+            const ClothHinge &h = cloth_->getTemplate().hinges[i];
+
+            Vector3d pi = cloth_->q.segment<3>(3*h.i);
+            Vector3d pij = cloth_->q.segment<3>(3*h.j) - pi;
+            Vector3d pik = cloth_->q.segment<3>(3*h.k) - pi;
+            Vector3d pil = cloth_->q.segment<3>(3*h.l) - pi;
+            Vector3d n0 = pij.cross(pik);
+            Vector3d n1 = pil.cross(pij);
+            Vector3d n0xn1 = n0.cross(n1);
+
+            if (n0xn1.squaredNorm() != 0.0)
+            {
+
+            }
+        }
+    }
 }
 
 void Simulation::clearScene()
